@@ -8,10 +8,10 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("🐦 Flappy Bird - Custom Graphics & Countdown")
-st.markdown("Nhấn **Spacebar**, **Mũi tên lên** hoặc **Click chuột** để bắt đầu và bay!")
+st.title("🐦 Flappy Bird - Phiên bản dễ chơi hơn")
+st.markdown("Nhấn **Spacebar**, **Mũi tên lên** hoặc **Click chuột** vào màn hình game để bay!")
 
-# Mã HTML/JS của game Flappy Bird
+# Mã HTML/JS của game Flappy Bird đã chỉnh sửa độ khó
 flappy_bird_html = """
 <!DOCTYPE html>
 <html lang="vi">
@@ -50,20 +50,17 @@ let frames = 0;
 let score = 0;
 let highScore = localStorage.getItem("flappyHighScore") || 0;
 
-// Trạng thái game: 0: Chờ, 1: Đếm ngược, 2: Đang chơi, 3: Thua
-const state = { getReady: 0, countdown: 1, game: 2, over: 3 };
+// Trạng thái game: 0: Chờ, 1: Đang chơi, 2: Thua
+const state = { getReady: 0, game: 1, over: 2 };
 let currentGameState = state.getReady;
 
-let countdownTimer = 3;
-let countdownInterval = null;
-
-// Chim (Bird) - Thiết kế đẹp hơn, có má hồng và hiệu ứng cánh
+// Chim (Bird) - Đã chỉnh nhẹ nhàng hơn
 const bird = {
-    x: 80,
-    y: 250,
-    radius: 14,
-    gravity: 0.18,
-    jump: -4.2,
+    x: 50,
+    y: 150,
+    radius: 12,
+    gravity: 0.18,   // Giảm trọng lực để chim rơi chậm, dễ kiểm soát
+    jump: -4.2,      // Lực nhảy vừa phải
     speed: 0,
     rotation: 0,
     
@@ -72,53 +69,33 @@ const bird = {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
         
-        // Thân chim (Gradient vàng-cam bắt mắt)
-        let bodyGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, this.radius);
-        bodyGrad.addColorStop(0, '#ffee58');
-        bodyGrad.addColorStop(1, '#ffa726');
-        
-        ctx.fillStyle = bodyGrad;
+        // Thân chim
+        ctx.fillStyle = '#f1c40f';
         ctx.beginPath();
         ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = '#e65100';
+        ctx.strokeStyle = '#d35400';
         ctx.stroke();
 
-        // Má hồng dễ thương
-        ctx.fillStyle = 'rgba(255, 82, 82, 0.5)';
-        ctx.beginPath();
-        ctx.arc(4, 3, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Mắt chim (To, long lanh hơn)
+        // Mắt chim
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(5, -4, 4.5, 0, Math.PI * 2);
+        ctx.arc(4, -4, 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.arc(6.5, -4, 2, 0, Math.PI * 2);
+        ctx.arc(5, -4, 1.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Mỏ chim (3D hơn)
-        ctx.fillStyle = '#ff7043';
+        // Mỏ chim
+        ctx.fillStyle = '#e67e22';
         ctx.beginPath();
-        ctx.moveTo(11, -2);
-        ctx.lineTo(20, 2);
-        ctx.lineTo(11, 6);
+        ctx.moveTo(10, -2);
+        ctx.lineTo(18, 2);
+        ctx.lineTo(10, 6);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#d84315';
-        ctx.stroke();
-
-        // Cánh chim vỗ nhẹ theo nhịp frames
-        ctx.fillStyle = '#fbc02d';
-        ctx.beginPath();
-        let wingOffset = Math.sin(frames * 0.3) * 3;
-        ctx.ellipse(-3, 2 + wingOffset, 5, 3, Math.PI / 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
 
         ctx.restore();
     },
@@ -129,10 +106,7 @@ const bird = {
     
     update: function() {
         if (currentGameState === state.getReady) {
-            this.y = 250 + Math.sin(frames * 0.1) * 8;
-            this.rotation = 0;
-        } else if (currentGameState === state.countdown) {
-            this.y = 250;
+            this.y = 150 + Math.sin(frames * 0.1) * 8;
             this.rotation = 0;
         } else {
             this.speed += this.gravity;
@@ -158,18 +132,182 @@ const bird = {
     
     reset: function() {
         this.speed = 0;
-        this.y = 250;
+        this.y = 150;
         this.rotation = 0;
     }
 };
 
-// Ống nước (Pipes)
+// Ống nước (Pipes) - Đã mở rộng khe hở và làm chậm tốc độ
 const pipes = {
     position: [],
     w: 60,
     h: 400,
-    gap: 165,
-    dx: 1.8,
+    gap: 165,       // Tăng khoảng cách giữa ống trên và dưới (cũ là 130)
+    dx: 1.8,        // Giảm tốc độ di chuyển ống để có thời gian nhìn trước (cũ là 2.2)
 
     draw: function() {
-        for
+        for (let i = 0; i < this.position.length; i++) {
+            let p = this.position[i];
+            let topY = p.y;
+            let bottomY = p.y + this.h + this.gap;
+
+            // Ống trên
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(p.x, topY, this.w, this.h);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#145a32';
+            ctx.strokeRect(p.x, topY, this.w, this.h);
+            ctx.fillRect(p.x - 3, topY + this.h - 24, this.w + 6, 24);
+            ctx.strokeRect(p.x - 3, topY + this.h - 24, this.w + 6, 24);
+
+            // Ống dưới
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(p.x, bottomY, this.w, this.h);
+            ctx.strokeRect(p.x, bottomY, this.w, this.h);
+            ctx.fillRect(p.x - 3, bottomY, this.w + 6, 24);
+            ctx.strokeRect(p.x - 3, bottomY, this.w + 6, 24);
+        }
+    },
+
+    update: function() {
+        if (currentGameState !== state.game) return;
+
+        if (frames % 120 === 0) { // Tăng khoảng thời gian giữa các ống xuất hiện
+            this.position.push({
+                x: canvas.width,
+                y: Math.floor(Math.random() * -150) - 120,
+                passed: false
+            });
+        }
+
+        for (let i = 0; i < this.position.length; i++) {
+            let p = this.position[i];
+            p.x -= this.dx;
+
+            let bottomY = p.y + this.h + this.gap;
+
+            // Va chạm ống trên
+            if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w &&
+                bird.y - bird.radius < p.y + this.h) {
+                currentGameState = state.over;
+            }
+            // Va chạm ống dưới
+            if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.w &&
+                bird.y + bird.radius > bottomY) {
+                currentGameState = state.over;
+            }
+
+            // Tính điểm
+            if (p.x + this.w < bird.x && !p.passed) {
+                score++;
+                p.passed = true;
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("flappyHighScore", highScore);
+                }
+            }
+
+            if (p.x + this.w <= 0) {
+                this.position.shift();
+                i--;
+            }
+        }
+    },
+    
+    reset: function() {
+        this.position = [];
+    }
+};
+
+// Nền (Background)
+const background = {
+    draw: function() {
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#deb887';
+        ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+        ctx.fillStyle = '#4caf50';
+        ctx.fillRect(0, canvas.height - 100, canvas.width, 16);
+    }
+};
+
+// Điều khiển
+function handleInput() {
+    if (currentGameState === state.getReady) {
+        currentGameState = state.game;
+        bird.flap();
+    } else if (currentGameState === state.game) {
+        bird.flap();
+    } else if (currentGameState === state.over) {
+        score = 0;
+        pipes.reset();
+        bird.reset();
+        currentGameState = state.getReady;
+    }
+}
+
+window.addEventListener("keydown", function(e) {
+    if (e.code === "Space" || e.code === "ArrowUp") {
+        e.preventDefault();
+        handleInput();
+    }
+});
+
+canvas.addEventListener("click", function() {
+    handleInput();
+});
+
+// Vòng lặp game
+function loop() {
+    bird.update();
+    pipes.update();
+    frames++;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    background.draw();
+    pipes.draw();
+    bird.draw();
+
+    if (currentGameState === state.getReady) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("NHẤN ĐỂ CHƠI", canvas.width / 2, canvas.height / 2 - 40);
+    } else if (currentGameState === state.game) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 35px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(score, canvas.width / 2, 70);
+    } else if (currentGameState === state.over) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(60, 180, 280, 200);
+        ctx.strokeStyle = "#fff";
+        ctx.strokeRect(60, 180, 280, 200);
+
+        ctx.fillStyle = "#ff5252";
+        ctx.font = "bold 30px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("THUA RỒI!", canvas.width / 2, 230);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "18px Arial";
+        ctx.fillText("Điểm: " + score, canvas.width / 2, 275);
+        ctx.fillText("Cao nhất: " + highScore, canvas.width / 2, 310);
+
+        ctx.font = "14px Arial";
+        ctx.fillStyle = "#ffeb3b";
+        ctx.fillText("Click để chơi lại", canvas.width / 2, 350);
+    }
+
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
+"""
+
+components.html(flappy_bird_html, height=650)
