@@ -8,10 +8,10 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("🐦 Flappy Bird - High Graphics (120 FPS)")
+st.title("🐦 Flappy Bird - Phiên bản dễ chơi hơn")
 st.markdown("Nhấn **Spacebar**, **Mũi tên lên** hoặc **Click chuột** vào màn hình game để bay!")
 
-# Mã HTML/JS của game Flappy Bird tối ưu mượt mà
+# Mã HTML/JS của game Flappy Bird đã chỉnh sửa độ khó
 flappy_bird_html = """
 <!DOCTYPE html>
 <html lang="vi">
@@ -50,17 +50,17 @@ let frames = 0;
 let score = 0;
 let highScore = localStorage.getItem("flappyHighScore") || 0;
 
-// Trạng thái game: 0: Sơ khai/Chờ, 1: Đang chơi, 2: Thua
+// Trạng thái game: 0: Chờ, 1: Đang chơi, 2: Thua
 const state = { getReady: 0, game: 1, over: 2 };
 let currentGameState = state.getReady;
 
-// Chim (Bird)
+// Chim (Bird) - Đã chỉnh nhẹ nhàng hơn
 const bird = {
     x: 50,
     y: 150,
     radius: 12,
-    gravity: 0.22,
-    jump: -4.6,
+    gravity: 0.18,   // Giảm trọng lực để chim rơi chậm, dễ kiểm soát
+    jump: -4.2,      // Lực nhảy vừa phải
     speed: 0,
     rotation: 0,
     
@@ -137,13 +137,13 @@ const bird = {
     }
 };
 
-// Ống nước (Pipes)
+// Ống nước (Pipes) - Đã mở rộng khe hở và làm chậm tốc độ
 const pipes = {
     position: [],
     w: 60,
     h: 400,
-    gap: 130,
-    dx: 2.2,
+    gap: 165,       // Tăng khoảng cách giữa ống trên và dưới (cũ là 130)
+    dx: 1.8,        // Giảm tốc độ di chuyển ống để có thời gian nhìn trước (cũ là 2.2)
 
     draw: function() {
         for (let i = 0; i < this.position.length; i++) {
@@ -157,7 +157,6 @@ const pipes = {
             ctx.lineWidth = 2;
             ctx.strokeStyle = '#145a32';
             ctx.strokeRect(p.x, topY, this.w, this.h);
-            // Miệng ống trên
             ctx.fillRect(p.x - 3, topY + this.h - 24, this.w + 6, 24);
             ctx.strokeRect(p.x - 3, topY + this.h - 24, this.w + 6, 24);
 
@@ -165,7 +164,6 @@ const pipes = {
             ctx.fillStyle = '#2ecc71';
             ctx.fillRect(p.x, bottomY, this.w, this.h);
             ctx.strokeRect(p.x, bottomY, this.w, this.h);
-            // Miệng ống dưới
             ctx.fillRect(p.x - 3, bottomY, this.w + 6, 24);
             ctx.strokeRect(p.x - 3, bottomY, this.w + 6, 24);
         }
@@ -174,10 +172,10 @@ const pipes = {
     update: function() {
         if (currentGameState !== state.game) return;
 
-        if (frames % 100 === 0) {
+        if (frames % 120 === 0) { // Tăng khoảng thời gian giữa các ống xuất hiện
             this.position.push({
                 x: canvas.width,
-                y: Math.floor(Math.random() * -180) - 100,
+                y: Math.floor(Math.random() * -150) - 120,
                 passed: false
             });
         }
@@ -224,11 +222,9 @@ const pipes = {
 // Nền (Background)
 const background = {
     draw: function() {
-        // Bầu trời
         ctx.fillStyle = '#4fc3f7';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Mặt đất
         ctx.fillStyle = '#deb887';
         ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
         ctx.fillStyle = '#4caf50';
@@ -262,20 +258,17 @@ canvas.addEventListener("click", function() {
     handleInput();
 });
 
-// Vòng lặp game tối ưu FPS cao
+// Vòng lặp game
 function loop() {
-    // Update
     bird.update();
     pipes.update();
     frames++;
 
-    // Draw
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     background.draw();
     pipes.draw();
     bird.draw();
 
-    // Text hiển thị
     if (currentGameState === state.getReady) {
         ctx.fillStyle = "#fff";
         ctx.font = "bold 28px Arial";
